@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RideHailing DApp - Web3.js</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+    
+    .header p {
+      color: #666;
+      font-size: 1.1em;
+    }
+    
+    .connection-status {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      margin: 5px 0;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .status-label {
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .status-value {
+      color: #667eea;
+      font-family: monospace;
+    }
+    
+    .status-value.connected {
+      color: #4CAF50;
+    }
+    
+    .status-value.disconnected {
+      color: #f44336;
+    }
+    
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .section {
+      background: white;
+      padding: 25px;
+      margin: 20px 0;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section h3 {
+      color: #667eea;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .card h4 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .card p {
+      color: #666;
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    
+    .card .address {
+      font-family: monospace;
+      font-size: 12px;
+      background: white;
+      padding: 5px;
+      border-radius: 5px;
+      word-break: break-all;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    
+    .badge.requested {
+      background: #ffeaa7;
+      color: #d63031;
+    }
+    
+    .badge.accepted {
+      background: #74b9ff;
+      color: #0984e3;
+    }
+    
+    .badge.funded {
+      background: #a29bfe;
+      color: #6c5ce7;
+    }
+    
+    .badge.completed {
+      background: #55efc4;
+      color: #00b894;
+    }
+    
+    .badge.confirmed {
+      background: #00b894;
+      color: white;
+    }
+    
+    #info {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      min-height: 20px;
+      border-left: 4px solid #4CAF50;
+    }
+    
+    #info.error {
+      background: #ffebee;
+      border-left-color: #f44336;
+    }
+    
+    #info.pending {
+      background: #fff3e0;
+      border-left-color: #ff9800;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #667eea;
+    }
+    
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🚕 RideHailing DApp</h1>
+      <p>Decentralized Ride-Hailing Platform on Ethereum Sepolia</p>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="connection-status">
+      <h3>🔗 Connection Status</h3>
+      <div class="status-item">
+        <span class="status-label">Wallet:</span>
+        <span id="walletAddress" class="status-value disconnected">Not connected</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Network:</span>
+        <span id="networkName" class="status-value disconnected">-</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Chain ID:</span>
+        <span id="chainId" class="status-value">-</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Contract Address:</span>
+        <span id="contractAddr" class="status-value">-</span>
+      </div>
+      <button id="connectBtn" onclick="connectWallet()">🔌 Connect MetaMask</button>
+      <button onclick="switchToSepolia()" id="switchBtn">🔄 Switch to Sepolia</button>
+      <button onclick="refreshData()" disabled id="refreshBtn">🔄 Refresh Data</button>
+    </div>
+
+    <!-- Driver Actions -->
+    <div class="section">
+      <h3>👨‍✈️ Driver Functions</h3>
+      <div class="actions">
+        <button onclick="registerDriver()" disabled id="registerBtn">📝 Register as Driver</button>
+        <button onclick="acceptRide()" disabled id="acceptBtn">✅ Accept Ride</button>
+        <button onclick="completeRide()" disabled id="completeBtn">🏁 Complete Ride</button>
+      </div>
+    </div>
+
+    <!-- Passenger Actions -->
+    <div class="section">
+      <h3>🧍 Passenger Functions</h3>
+      <div class="actions">
+        <button onclick="requestRide()" disabled id="requestBtn">🚗 Request Ride</button>
+        <button onclick="fundRide()" disabled id="fundBtn">💰 Fund Ride (Escrow)</button>
+        <button onclick="confirmArrival()" disabled id="confirmBtn">✔️ Confirm Arrival</button>
+      </div>
+    </div>
+
+    <!-- Registered Drivers -->
+    <div class="section">
+      <h3>👥 Registered Drivers</h3>
+      <div id="driversList" class="grid">
+        <div class="empty-state">No drivers registered yet</div>
+      </div>
+    </div>
+
+    <!-- Rides List -->
+    <div class="section">
+      <h3>📋 Rides List</h3>
+      <div id="ridesList" class="grid">
+        <div class="empty-state">No rides created yet</div>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="section">
+      <h3>ℹ️ Information</h3>
+      <div id="info" class="loading">Loading Web3.js...</div>
+    </div>
+  </div>
+
+  <!-- Web3.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+
+  <script>
+    let web3;
+    let contract;
+    let userAccount;
+    let registeredDrivers = [];
+    let allRides = [];
+
+    const contractAddress = "0x27a7424e55B583F7AbC1D733e2eFbc77A61396FE";
+
+    const abi = [
+      {
+        "inputs":[{"internalType":"uint256","name":"_rideId","type":"uint256"}],
+        "name":"acceptRide","outputs":[],"stateMutability":"nonpayable","type":"function"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"_rideId","type":"uint256"}],
+        "name":"completeRide","outputs":[],"stateMutability":"nonpayable","type":"function"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"_rideId","type":"uint256"}],
+        "name":"confirmArrival","outputs":[],"stateMutability":"nonpayable","type":"function"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"_rideId","type":"uint256"}],
+        "name":"fundRide","outputs":[],"stateMutability":"payable","type":"function"
+      },
+      {
+        "inputs":[{"internalType":"string","name":"_name","type":"string"},{"internalType":"uint256","name":"_tariff","type":"uint256"}],
+        "name":"registerDriver","outputs":[],"stateMutability":"nonpayable","type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"_driver","type":"address"}],
+        "name":"requestRide","outputs":[],"stateMutability":"nonpayable","type":"function"
+      },
+      {
+        "inputs":[],"name":"getRidesCount",
+        "outputs":[{"internalType":"uint256","name":"","type":"uint256"}],
+        "stateMutability":"view","type":"function"
+      },
+      {
+        "inputs":[{"internalType":"address","name":"_driver","type":"address"}],
+        "name":"getDriver",
+        "outputs":[{
+          "components":[
+            {"internalType":"string","name":"name","type":"string"},
+            {"internalType":"uint256","name":"tariff","type":"uint256"},
+            {"internalType":"bool","name":"isRegistered","type":"bool"}
+          ],
+          "internalType":"struct RideHailing.Driver","name":"","type":"tuple"
+        }],
+        "stateMutability":"view","type":"function"
+      },
+      {
+        "inputs":[{"internalType":"uint256","name":"","type":"uint256"}],
+        "name":"rides",
+        "outputs":[
+          {"internalType":"address","name":"passenger","type":"address"},
+          {"internalType":"address","name":"driver","type":"address"},
+          {"internalType":"uint256","name":"price","type":"uint256"},
+          {"internalType":"enum RideHailing.RideStatus","name":"status","type":"uint8"}
+        ],
+        "stateMutability":"view","type":"function"
+      }
+    ];
+
+    // Initialize on page load
+    window.addEventListener('load', async function() {
+      if (typeof Web3 === 'undefined') {
+        document.getElementById("info").innerText = "❌ Failed to load Web3.js library";
+        document.getElementById("info").className = "error";
+        return;
+      }
+      
+      document.getElementById("info").innerText = "✅ Web3.js loaded! Please connect your wallet.";
+      document.getElementById("contractAddr").innerText = contractAddress;
+      console.log("✅ Web3.js loaded successfully");
+    });
+
+    /* ================= HELPER FUNCTIONS ================= */
+
+    function enableButtons() {
+      const buttons = ['registerBtn', 'acceptBtn', 'completeBtn', 
+                       'requestBtn', 'fundBtn', 'confirmBtn', 'refreshBtn'];
+      buttons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = false;
+      });
+    }
+
+    function checkConnection() {
+      if (!contract || !userAccount) {
+        alert("⚠️ Please connect your wallet first!");
+        return false;
+      }
+      return true;
+    }
+
+    function showInfo(message, type = 'info') {
+      const infoEl = document.getElementById('info');
+      infoEl.innerText = message;
+      infoEl.className = type;
+    }
+
+    function getStatusBadge(status) {
+      const statuses = ['requested', 'accepted', 'funded', 'completed', 'confirmed'];
+      return `<span class="badge ${statuses[status]}">${statuses[status].toUpperCase()}</span>`;
+    }
+
+    /* ================= CONNECT WALLET ================= */
+
+    async function switchToSepolia() {
+      if (!window.ethereum) {
+        alert("❌ MetaMask not detected!");
+        return;
+      }
+
+      try {
+        showInfo("⏳ Switching to Sepolia...", "pending");
+        
+        // Try to switch to Sepolia (Chain ID: 11155111 in hex = 0xaa36a7)
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: '0xaa36a7' }],
+        });
+        
+        showInfo("✅ Switched to Sepolia! Please connect wallet.", "info");
+        alert("✅ Switched to Sepolia! Now click 'Connect MetaMask'");
+        
+      } catch (switchError) {
+        // This error code indicates that the chain has not been added to MetaMask
+        if (switchError.code === 4902) {
+          try {
+            showInfo("⏳ Adding Sepolia network...", "pending");
+            
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: '0xaa36a7',
+                chainName: 'Sepolia Testnet',
+                nativeCurrency: {
+                  name: 'ETH',
+                  symbol: 'ETH',
+                  decimals: 18
+                },
+                rpcUrls: ['https://rpc.sepolia.org'],
+                blockExplorerUrls: ['https://sepolia.etherscan.io']
+              }],
+            });
+            
+            showInfo("✅ Sepolia added! Please connect wallet.", "info");
+            alert("✅ Sepolia network added! Now click 'Connect MetaMask'");
+            
+          } catch (addError) {
+            console.error("❌ Failed to add network:", addError);
+            showInfo("❌ Failed to add Sepolia: " + addError.message, "error");
+          }
+        } else {
+          console.error("❌ Failed to switch network:", switchError);
+          showInfo("❌ Failed to switch: " + switchError.message, "error");
+        }
+      }
+    }
+
+    async function connectWallet() {
+      if (typeof Web3 === 'undefined') {
+        alert("❌ Web3.js library not loaded. Please refresh the page.");
+        return;
+      }
+
+      if (!window.ethereum) {
+        alert("❌ MetaMask not detected! Please install MetaMask.");
+        window.open('https://metamask.io/download/', '_blank');
+        return;
+      }
+
+      try {
+        console.log("Connecting to MetaMask...");
+        showInfo("⏳ Connecting to MetaMask...", "pending");
+
+        // Request account access
+        const accounts = await window.ethereum.request({ 
+          method: "eth_requestAccounts" 
+        });
+
+        // Initialize Web3
+        web3 = new Web3(window.ethereum);
+        userAccount = accounts[0];
+
+        // Initialize contract
+        contract = new web3.eth.Contract(abi, contractAddress);
+
+        // Get network info
+        const chainId = await web3.eth.getChainId();
+        console.log("Chain ID detected:", chainId, "Type:", typeof chainId);
+
+        // Update UI
+        document.getElementById("walletAddress").innerText = 
+          userAccount.substring(0, 6) + "..." + userAccount.substring(38);
+        document.getElementById("walletAddress").className = "status-value connected";
+        
+        // Check if Sepolia (Chain ID: 11155111 decimal or 0xaa36a7 hex)
+        // Web3.js v1 returns number, so we check both formats
+        const sepoliaChainId = 11155111;
+        const isSepoliaDecimal = chainId == sepoliaChainId;
+        const isSepoliaHex = chainId == '0xaa36a7';
+        const isSepoliaNumber = parseInt(chainId) === sepoliaChainId;
+        
+        if (isSepoliaDecimal || isSepoliaHex || isSepoliaNumber) {
+          document.getElementById("networkName").innerText = "Sepolia Testnet ✅";
+          document.getElementById("networkName").className = "status-value connected";
+        } else {
+          document.getElementById("networkName").innerText = "⚠️ Wrong Network! Please switch to Sepolia";
+          document.getElementById("networkName").className = "status-value disconnected";
+          alert("⚠️ Please switch to Sepolia Testnet in MetaMask!");
+        }
+        
+        document.getElementById("chainId").innerText = chainId + " (Sepolia: 11155111)";
+
+        enableButtons();
+
+        showInfo("✅ Connected to MetaMask! Network: Sepolia (Chain ID: " + chainId + ")", "info");
+
+        console.log("✅ Connected successfully!");
+        console.log("Account:", userAccount);
+        console.log("Chain ID:", chainId);
+        console.log("Contract:", contractAddress);
+
+        // Load initial data
+        await refreshData();
+
+      } catch (error) {
+        console.error("❌ Connection error:", error);
+        showInfo("❌ Connection failed: " + error.message, "error");
+        alert("Failed to connect: " + error.message);
+      }
+    }
+
+    /* ================= DRIVER FUNCTIONS ================= */
+
+    async function registerDriver() {
+      if (!checkConnection()) return;
+
+      const name = prompt("Enter driver name:", "Driver Budi");
+      if (!name) return;
+
+      const tariff = prompt("Enter tariff per km (in ETH):", "0.01");
+      if (!tariff) return;
+
+      try {
+        console.log("Registering driver:", name, "with tariff:", tariff, "ETH");
+        
+        // Check balance first
+        const balance = await web3.eth.getBalance(userAccount);
+        console.log("Your balance:", web3.utils.fromWei(balance, 'ether'), "ETH");
+        
+        showInfo("⏳ Registering driver...", "pending");
+        
+        const tariffWei = web3.utils.toWei(tariff, 'ether');
+        
+        // Estimate gas first
+        const gasEstimate = await contract.methods.registerDriver(name, tariffWei)
+          .estimateGas({ from: userAccount });
+        console.log("Gas estimate:", gasEstimate);
+        
+        const tx = await contract.methods.registerDriver(name, tariffWei)
+          .send({ 
+            from: userAccount,
+            gas: Math.floor(gasEstimate * 1.2) // Add 20% buffer
+          });
+        
+        console.log("✅ Transaction confirmed:", tx.transactionHash);
+        showInfo("✅ Driver registered successfully! TX: " + tx.transactionHash, "info");
+        alert("✅ Driver registered successfully!");
+
+        // Refresh data
+        await refreshData();
+
+      } catch (error) {
+        console.error("❌ Register error:", error);
+        const errorMsg = error.message || "Unknown error";
+        showInfo("❌ Error: " + errorMsg, "error");
+        alert("❌ Register failed: " + errorMsg);
+      }
+    }
+
+    async function acceptRide() {
+      if (!checkConnection()) return;
+
+      const rideId = prompt("Enter Ride ID:");
+      if (rideId === null) return;
+
+      try {
+        console.log("Accepting ride ID:", rideId);
+        showInfo("⏳ Accepting ride...", "pending");
+        
+        const gasEstimate = await contract.methods.acceptRide(rideId)
+          .estimateGas({ from: userAccount });
+        
+        const tx = await contract.methods.acceptRide(rideId)
+          .send({ 
+            from: userAccount,
+            gas: Math.floor(gasEstimate * 1.2)
+          });
+        
+        console.log("✅ Transaction confirmed:", tx.transactionHash);
+        showInfo("✅ Ride accepted! TX: " + tx.transactionHash, "info");
+        alert("✅ Ride accepted!");
+
+        await refreshData();
+
+      } catch (error) {
+        console.error("❌ Accept error:", error);
+        showInfo("❌ Error: " + error.message, "error");
+        alert("❌ Accept failed: " + error.message);
+      }
+    }
+
+    async function completeRide() {
+      if (!checkConnection()) return;
+
+      const rideId = prompt("Enter Ride ID:");
+      if (rideId === null) return;
+
+      try {
+        console.log("Completing ride ID:", rideId);
+        showInfo("⏳ Completing ride...", "pending");
+        
+        const gasEstimate = await contract.methods.completeRide(rideId)
+          .estimateGas({ from: userAccount });
+        
+        const tx = await contract.methods.completeRide(rideId)
+          .send({ 
+            from: userAccount,
+            gas: Math.floor(gasEstimate * 1.2)
+          });
+        
+        console.log("✅ Transaction confirmed:", tx.transactionHash);
+        showInfo("✅ Ride completed! TX: " + tx.transactionHash, "info");
+        alert("✅ Ride completed!");
+
+        await refreshData();
+
+      } catch (error) {
+        console.error("❌ Complete error:", error);
+        showInfo("❌ Error: " + error.message, "error");
+        alert("❌ Complete failed: " + error.message);
+      }
+    }
+
+    /* ================= PASSENGER FUNCTIONS ================= */
+
+    async function requestRide() {
+      if (!checkConnection()) return;
+
+      const driverAddress = prompt("Enter driver address:");
+      if (!driverAddress) return;
+
+      try {
+        console.log("Requesting ride from driver:", driverAddress);
+        showInfo("⏳ Requesting ride...", "pending");
+        
+        const gasEstimate = await contract.methods.requestRide(driverAddress)
+          .estimateGas({ from: userAccount });
+        
+        const tx = await contract.methods.requestRide(driverAddress)
+          .send({ 
+            from: userAccount,
+            gas: Math.floor(gasEstimate * 1.2)
+          });
+        
+        console.log("✅ Transaction confirmed:", tx.transactionHash);
+        showInfo("✅ Ride requested! TX: " + tx.transactionHash, "info");
+        alert("✅ Ride requested!");
+
+        await refreshData();
+
+      } catch (error) {
+        console.error("❌ Request error:", error);
+        showInfo("❌ Error: " + error.message, "error");
+        alert("❌ Request failed: " + error.message);
+      }
+    }
+
+    async function fundRide() {
+      if (!checkConnection()) return;
+
+      const rideId = prompt("Enter Ride ID:");
+      if (rideId === null) return;
+
+      const amount = prompt("Enter amount in ETH:", "0.01");
+      if (!amount) return;
+
+      try {
+        console.log("Funding ride ID:", rideId, "with", amount, "ETH");
+        
+        // Check balance
+        const balance = await web3.eth.getBalance(userAccount);
+        console.log("Your balance:", web3.utils.fromWei(balance, 'ether'), "ETH");
+        
+        showInfo("⏳ Funding ride (Escrow)...", "pending");
+        
+        const amountWei = web3.utils.toWei(amount, 'ether');
+        
+        const gasEstimate = await contract.methods.fundRide(rideId)
+          .estimateGas({ 
+            from: userAccount,
+            value: amountWei
+          });
+        
+        const tx = await contract.methods.fundRide(rideId)
+          .send({ 
+            from: userAccount,
+            value: amountWei,
+            gas: Math.floor(gasEstimate * 1.2)
+          });
+        
+        console.log("✅ Transaction confirmed:", tx.transactionHash);
+        showInfo("✅ Ride funded (Escrow)! TX: " + tx.transactionHash, "info");
+        alert("✅ Ride funded! Money held in escrow.");
+
+        await refreshData();
+
+      } catch (error) {
+        console.error("❌ Fund error:", error);
+        showInfo("❌ Error: " + error.message, "error");
+        alert("❌ Fund failed: " + error.message);
+      }
+    }
+
+    async function confirmArrival() {
+      if (!checkConnection()) return;
+
+      const rideId = prompt("Enter Ride ID:");
+      if (rideId === null) return;
+
+      try {
+        console.log("Confirming arrival for ride ID:", rideId);
+        showInfo("⏳ Confirming arrival & releasing payment...", "pending");
+        
+        const gasEstimate = await contract.methods.confirmArrival(rideId)
+          .estimateGas({ from: userAccount });
+        
+        const tx = await contract.methods.confirmArrival(rideId)
+          .send({ 
+            from: userAccount,
+            gas: Math.floor(gasEstimate * 1.2)
+          });
+        
+        console.log("✅ Transaction confirmed:", tx.transactionHash);
+        showInfo("✅ Arrival confirmed! Payment released to driver. TX: " + tx.transactionHash, "info");
+        alert("✅ Arrival confirmed! Payment released to driver.");
+
+        await refreshData();
+
+      } catch (error) {
+        console.error("❌ Confirm error:", error);
+        showInfo("❌ Error: " + error.message, "error");
+        alert("❌ Confirm failed: " + error.message);
+      }
+    }
+
+    /* ================= DATA LOADING ================= */
+
+    async function refreshData() {
+      if (!checkConnection()) return;
+
+      try {
+        showInfo("⏳ Loading data...", "pending");
+        
+        // Get rides count
+        const ridesCount = await contract.methods.getRidesCount().call();
+        console.log("Total rides:", ridesCount);
+
+        // Load all rides
+        allRides = [];
+        for (let i = 0; i < ridesCount; i++) {
+          const ride = await contract.methods.rides(i).call();
+          
+          // Get driver info
+          const driver = await contract.methods.getDriver(ride.driver).call();
+          
+          allRides.push({
+            id: i,
+            passenger: ride.passenger,
+            driver: ride.driver,
+            driverName: driver.name,
+            price: ride.price,
+            status: parseInt(ride.status)
+          });
+
+          // Collect unique drivers
+          if (driver.isRegistered && !registeredDrivers.find(d => d.address === ride.driver)) {
+            registeredDrivers.push({
+              address: ride.driver,
+              name: driver.name,
+              tariff: driver.tariff
+            });
+          }
+        }
+
+        // Display data
+        displayDrivers();
+        displayRides();
+
+        showInfo(`✅ Data loaded! Total rides: ${ridesCount}`, "info");
+
+      } catch (error) {
+        console.error("❌ Load data error:", error);
+        showInfo("❌ Error loading data: " + error.message, "error");
+      }
+    }
+
+    function displayDrivers() {
+      const container = document.getElementById('driversList');
+      
+      if (registeredDrivers.length === 0) {
+        container.innerHTML = '<div class="empty-state">No drivers registered yet</div>';
+        return;
+      }
+
+      container.innerHTML = registeredDrivers.map(driver => `
+        <div class="card">
+          <h4>👨‍✈️ ${driver.name}</h4>
+          <p><strong>Address:</strong></p>
+          <p class="address">${driver.address}</p>
+          <p><strong>Tariff:</strong> ${web3.utils.fromWei(driver.tariff, 'ether')} ETH/km</p>
+        </div>
+      `).join('');
+    }
+
+    function displayRides() {
+      const container = document.getElementById('ridesList');
+      
+      if (allRides.length === 0) {
+        container.innerHTML = '<div class="empty-state">No rides created yet</div>';
+        return;
+      }
+
+      const statuses = ['REQUESTED', 'ACCEPTED', 'FUNDED', 'COMPLETED', 'CONFIRMED'];
+      
+      container.innerHTML = allRides.map(ride => `
+        <div class="card">
+          <h4>🚗 Ride #${ride.id}</h4>
+          <p><strong>Status:</strong> ${getStatusBadge(ride.status)}</p>
+          <p><strong>Driver:</strong> ${ride.driverName}</p>
+          <p class="address">${ride.driver}</p>
+          <p><strong>Passenger:</strong></p>
+          <p class="address">${ride.passenger}</p>
+          <p><strong>Price:</strong> ${web3.utils.fromWei(ride.price, 'ether')} ETH</p>
+        </div>
+      `).join('');
+    }
+
+    /* ================= EVENT LISTENERS ================= */
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', function (accounts) {
+        console.log("Account changed:", accounts[0]);
+        location.reload();
+      });
+
+      window.ethereum.on('chainChanged', function (chainId) {
+        console.log("Chain changed:", chainId);
+        location.reload();
+      });
+    }
+  </script>
+</body>
+</html>
