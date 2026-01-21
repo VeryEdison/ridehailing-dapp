@@ -248,28 +248,3 @@ All transactions recorded on blockchain
 Immutable and verifiable
 Public audit trail on Etherscan
 
-
-Ride Status Flow
-┌─────────────┐
-│  REQUESTED  │  ← Passenger creates ride request
-└──────┬──────┘
-       │ Driver clicks "Accept Ride"
-       ↓
-┌─────────────┐
-│  ACCEPTED   │  ← Driver accepted the request
-└──────┬──────┘
-       │ Passenger clicks "Fund Ride"
-       ↓
-┌─────────────┐
-│   FUNDED    │  ← Money held in escrow (smart contract)
-└──────┬──────┘
-       │ Driver clicks "Complete Ride"
-       ↓
-┌─────────────┐
-│  COMPLETED  │  ← Driver arrived at destination
-└──────┬──────┘
-       │ Passenger clicks "Confirm Arrival"
-       ↓
-┌─────────────┐
-│  CONFIRMED  │  ← Payment released to driver ✅
-└─────────────┘
